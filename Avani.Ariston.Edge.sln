@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App", "App", "{7226A306-5BFB-49CC-A9B0-2BBD8948DA1D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{0B55529A-BC5C-4FFD-997F-8AC247D8F884}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Setup", "Setup", "{5C8048D4-C45F-4243-B982-8E5F4B0BD74F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Avani.Andon.Edge.Logic", "Avani.Andon.Edge.Logic\Avani.Andon.Edge.Logic.csproj", "{90DDA5BB-954C-45AE-89FD-9B5342034AEE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Avani.Andon.Edge.Service", "Avani.Andon.Edge.Service\Avani.Andon.Edge.Service.csproj", "{910BF727-5966-4B5E-9880-4CEEDF124139}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Avani.Andon.Edge.Test", "Avani.Andon.Edge.Test\Avani.Andon.Edge.Test.csproj", "{37697648-9437-4F22-8DA5-90968125FB63}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Avani.Andon.Edge.Setup", "Avani.Andon.Edge.Setup\Avani.Andon.Edge.Setup.vdproj", "{A16166D7-9776-44A2-BE42-A9B14FB0F501}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{90DDA5BB-954C-45AE-89FD-9B5342034AEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90DDA5BB-954C-45AE-89FD-9B5342034AEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90DDA5BB-954C-45AE-89FD-9B5342034AEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90DDA5BB-954C-45AE-89FD-9B5342034AEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{910BF727-5966-4B5E-9880-4CEEDF124139}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{910BF727-5966-4B5E-9880-4CEEDF124139}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{910BF727-5966-4B5E-9880-4CEEDF124139}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{910BF727-5966-4B5E-9880-4CEEDF124139}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37697648-9437-4F22-8DA5-90968125FB63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37697648-9437-4F22-8DA5-90968125FB63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37697648-9437-4F22-8DA5-90968125FB63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37697648-9437-4F22-8DA5-90968125FB63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A16166D7-9776-44A2-BE42-A9B14FB0F501}.Debug|Any CPU.ActiveCfg = Release
+		{A16166D7-9776-44A2-BE42-A9B14FB0F501}.Debug|Any CPU.Build.0 = Release
+		{A16166D7-9776-44A2-BE42-A9B14FB0F501}.Release|Any CPU.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{90DDA5BB-954C-45AE-89FD-9B5342034AEE} = {7226A306-5BFB-49CC-A9B0-2BBD8948DA1D}
+		{910BF727-5966-4B5E-9880-4CEEDF124139} = {7226A306-5BFB-49CC-A9B0-2BBD8948DA1D}
+		{37697648-9437-4F22-8DA5-90968125FB63} = {0B55529A-BC5C-4FFD-997F-8AC247D8F884}
+		{A16166D7-9776-44A2-BE42-A9B14FB0F501} = {5C8048D4-C45F-4243-B982-8E5F4B0BD74F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F84FF09C-4C68-41B7-A41C-7CF77622DBB0}
+	EndGlobalSection
+EndGlobal
