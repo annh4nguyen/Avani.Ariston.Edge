@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Avani.Andon.Edge.Logic</RootNamespace>
     <AssemblyName>Avani.Andon.Edge.Logic</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -38,8 +39,9 @@
     <Reference Include="EasyNetQ, Version=5.4.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\EasyNetQ.5.4.0\lib\net461\EasyNetQ.dll</HintPath>
     </Reference>
-    <Reference Include="iAndon.MSG">
-      <HintPath>..\..\Biz\Andon.MSG\bin\Debug\iAndon.MSG.dll</HintPath>
+    <Reference Include="iAndon.MSG, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\iAndon-V3\Biz\Andon.MSG\bin\Debug\iAndon.MSG.dll</HintPath>
     </Reference>
     <Reference Include="log4net, Version=1.2.13.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
       <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
@@ -121,6 +123,7 @@
     <Compile Include="message\AndonMessage.cs" />
     <Compile Include="message\ModbusRTUOverTCP.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PMS_Sync.cs" />
     <Compile Include="TCPServer.cs" />
     <Compile Include="TCPSocketClient.cs" />
     <Compile Include="TCPSocketListener.cs" />

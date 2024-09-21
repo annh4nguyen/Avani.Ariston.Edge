@@ -165,9 +165,9 @@ namespace Avani.Andon.Edge.Logic
                         //_msg = ModbusRTUOverTCP.ReadDiscreteInputsMsg(_node, _startAddress, _functionCode, _numberOfRegisters);
                         byte[] data = ModbusRTUOverTCP.ReadDiscreteInputsMsg(_node, _startAddress, _functionCode, _numberOfRegisters);
                         _msg = ByteArrayToString(data);
-                        _Logger.Write(_LogCategory, $"Ping Client {this.ServerIP} - Slave {_node}: {_msg}", LogType.Debug);
                         if (this.IsConnected)
                         {
+                            _Logger.Write(_LogCategory, $"Ping Client {this.ServerIP} - Slave {_node}: {_msg}", LogType.Debug);
                             this.Client.Send(data);
                             Thread.Sleep(TIME_SLEEP_SEND);
                         }
@@ -216,9 +216,9 @@ namespace Avani.Andon.Edge.Logic
                     byte[] dataNode = ModbusRTUOverTCP.WriteMultiCoilsMsg((byte)_id, 0, 2, 15, (byte)_nodeValue);
                     string _msgNode = ByteArrayToString(dataNode);
 
-                    _Logger.Write(_LogCategory, $"Starting send command at {ServerIP} to Local node {_id}: {_msgNode}!", LogType.Debug);
                     if (this.IsConnected)
                     {
+                        _Logger.Write(_LogCategory, $"Starting send command at {ServerIP} to Local node {_id}: {_msgNode}!", LogType.Debug);
                         this.Client.Send(dataNode);
                         Thread.Sleep(TIME_SLEEP_SEND);
                         //_Logger.Write(_LogCategory, $"Finished send command at {ServerIP} to Local node {_id}!", LogType.Debug);
@@ -233,9 +233,9 @@ namespace Avani.Andon.Edge.Logic
                 byte[] dataLine = ModbusRTUOverTCP.WriteMultiCoilsMsg(31, 0, 2, 15, (byte)_lineValue);
                 string _msgLine = ByteArrayToString(dataLine);
 
-                _Logger.Write(_LogCategory, $"Starting send command at {ServerIP} to node 31: {_msgLine}!", LogType.Debug);
                 if (this.IsConnected)
                 {
+                    _Logger.Write(_LogCategory, $"Starting send command at {ServerIP} to node 31: {_msgLine}!", LogType.Debug);
                     this.Client.Send(dataLine);
                     Thread.Sleep(TIME_SLEEP_SEND);
                     _Logger.Write(_LogCategory, $"Finished send command at {ServerIP} to node 31!", LogType.Debug);
@@ -331,12 +331,15 @@ namespace Avani.Andon.Edge.Logic
                         this.Connect(remoteEndpoint);
                     }
                     Thread.Sleep(TIME_WAIT_CONNECT);
-                    _TimerPingCommand.Start();
-                    _TimerSendCommand.Start();
+                    if (this.IsConnected)
+                    {
+                        _TimerPingCommand.Start();
+                        _TimerSendCommand.Start();
 
-                    //Khởi tạo nó tính từ đó là nhận dữ liệu
-                    LastTimeReceiveData = DateTime.Now;
-
+                        //Khởi tạo nó tính từ đó là nhận dữ liệu
+                        LastTimeReceiveData = DateTime.Now;
+                        _Logger.Write(_LogCategory, $"Connected to {ServerIP}: {ServerPort}!", LogType.Debug);
+                    }
                 }
             }
             catch (Exception ex)
@@ -555,9 +558,8 @@ namespace Avani.Andon.Edge.Logic
 
             string _deviceId = data.Substring(0, 2);
             if (_deviceId == "00") return null;
-
-            int _in1 = int.Parse(data.Substring(6, 4));
-            int _in2 = int.Parse(data.Substring(10, 4));
+            int _in1 = int.Parse(data.Substring(6, 4), System.Globalization.NumberStyles.HexNumber);
+            int _in2 = int.Parse(data.Substring(10, 4), System.Globalization.NumberStyles.HexNumber);
             //if (_IsInvertInput)
             //{
             //    //_in1 = (_in1 == 0) ? 1 : 0;
@@ -580,7 +582,7 @@ namespace Avani.Andon.Edge.Logic
             if (_deviceId == "00") return null;
 
             //Giá trị Input là vị trí cặp số 4
-            int _input = int.Parse(data.Substring(6, 2));
+            int _input = int.Parse(data.Substring(6, 2), System.Globalization.NumberStyles.HexNumber);
             //Dịch qua BIT
             string _inputString = Convert.ToString(_input, 2).PadLeft(4, '0');
             int _in1 = int.Parse(_inputString.Substring(3,1));

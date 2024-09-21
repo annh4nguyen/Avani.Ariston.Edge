@@ -40,6 +40,12 @@ namespace Avani.Andon.Edge.Logic
         //private Timer _TimerRequest = new Timer();
         */
 
+        private int _SyncInterval = int.Parse(ConfigurationManager.AppSettings["sync_interval"]);
+        private string _Sync_Url = ConfigurationManager.AppSettings["sync_url"];
+        private string _Sync_Code = ConfigurationManager.AppSettings["sync_codes"];
+
+        private PMS_Sync PMS_Sync = null;
+
         private int _RequestInterval = 1000 * int.Parse(ConfigurationManager.AppSettings["request_interval"]);
         System.Timers.Timer timerCheckNoData = new System.Timers.Timer();
 
@@ -49,9 +55,10 @@ namespace Avani.Andon.Edge.Logic
 
         bool isInitForPublishRabbit = false;
 
-
-
         System.Timers.Timer timerCheckDisconnect = new System.Timers.Timer();
+
+
+        private bool _isProcessSync = (int.Parse(ConfigurationManager.AppSettings["is_process_sync"]) == 1);
 
 
         #endregion
@@ -83,8 +90,12 @@ namespace Avani.Andon.Edge.Logic
                     //ListenCommand();
                 }
 
-
-
+                if (_isProcessSync)
+                {
+                    //Process Sync
+                    PMS_Sync = new PMS_Sync(_Sync_Url, _SyncInterval, _Sync_Code);
+                    PMS_Sync.Start();
+                }    
             }
             catch (Exception ex)
             {
