@@ -46,15 +46,13 @@ namespace Avani.Andon.Edge.Logic
 
         private Dictionary<int, Andon_MSG> Nodes = new Dictionary<int, Andon_MSG>();
 
-        //public static int TIMER_SCHEDULE_CHECK_DISCONNECT = Convert.ToInt32(ConfigurationSettings.AppSettings["TIMER_SCHEDULE_CHECK_DISCONNECT"].Trim());//mili giay
-        //public static int TIME_CONFIRM_DISCONNECT = Convert.ToInt32(ConfigurationSettings.AppSettings["TIME_CONFIRM_DISCONNECT"].Trim());//phut
-        public static int TIME_WAIT_CONNECT = Convert.ToInt32(ConfigurationSettings.AppSettings["TIME_WAIT_CONNECT"].Trim());//mili giay
-
-        public static int TIME_SLEEP_SEND = Convert.ToInt32(ConfigurationSettings.AppSettings["TIME_SLEEP_SEND"].Trim());//mili giay
-
-        public static int TIME_NOT_RECEIVE_DATA = Convert.ToInt32(ConfigurationSettings.AppSettings["TIME_NOT_RECEIVE_DATA"].Trim());//giay
-
-        public static int SEND_RESET_NOT_RESPONSE = Convert.ToInt32(ConfigurationSettings.AppSettings["SEND_RESET_NOT_RESPONSE"].Trim());//giay
+        //public static int TIMER_SCHEDULE_CHECK_DISCONNECT = Convert.ToInt32(ConfigurationManager.AppSettings["TIMER_SCHEDULE_CHECK_DISCONNECT"].Trim());//mili giay
+        //public static int TIME_CONFIRM_DISCONNECT = Convert.ToInt32(ConfigurationManager.AppSettings["TIME_CONFIRM_DISCONNECT"].Trim());//phut
+        public static int TIME_WAIT_CONNECT = Convert.ToInt32(ConfigurationManager.AppSettings["TIME_WAIT_CONNECT"].Trim());//mili giay
+        public static int TIME_SLEEP_SEND = Convert.ToInt32(ConfigurationManager.AppSettings["TIME_SLEEP_SEND"].Trim());//mili giay
+        public static int TIME_NOT_RECEIVE_DATA = Convert.ToInt32(ConfigurationManager.AppSettings["TIME_NOT_RECEIVE_DATA"].Trim());//giay
+        public static int SEND_RESET_NOT_RESPONSE = Convert.ToInt32(ConfigurationManager.AppSettings["SEND_RESET_NOT_RESPONSE"].Trim());//giay
+        public static int RESET_AFTER_NOT_RECEIVE_DATA = 1000 * Convert.ToInt32(ConfigurationManager.AppSettings["RESET_AFTER_NOT_RECEIVE_DATA"].Trim());//Time
 
         private bool _IsInvertInput = (ConfigurationManager.AppSettings["INVERT_INPUT"] == "1");
 
@@ -63,7 +61,8 @@ namespace Avani.Andon.Edge.Logic
 
         private System.Timers.Timer _TimerPingCommand = new System.Timers.Timer();
         private System.Timers.Timer _TimerSendCommand = new System.Timers.Timer();
-        private System.Timers.Timer _TimerReconnect = new System.Timers.Timer();
+        //private System.Timers.Timer _TimerReconnect = new System.Timers.Timer();
+        private System.Timers.Timer _TimerCheckNoData = new System.Timers.Timer();
 
         public int Id { get; set; }
         public string ServerIP { get; set; }
@@ -132,10 +131,14 @@ namespace Avani.Andon.Edge.Logic
 
 
             //Reconnect gateway 
-            _TimerReconnect.Interval = _ReconnectInterval;
-            _TimerReconnect.Elapsed += _TimerReconnect_Elapsed;
-            _TimerReconnect.Start();
+            //_TimerReconnect.Interval = _ReconnectInterval;
+            //_TimerReconnect.Elapsed += _TimerReconnect_Elapsed;
+            //_TimerReconnect.Start();
 
+            //Check NoData gateway 
+            _TimerCheckNoData.Interval = _ReconnectInterval;
+            _TimerCheckNoData.Elapsed += _TimerCheckNoData_Elapsed;
+            _TimerCheckNoData.Start();
 
         }
 
@@ -167,7 +170,7 @@ namespace Avani.Andon.Edge.Logic
                         _msg = ByteArrayToString(data);
                         if (this.IsConnected)
                         {
-                            _Logger.Write(_LogCategory, $"Ping Client {this.ServerIP} - Slave {_node}: {_msg}", LogType.Debug);
+                            //_Logger.Write(_LogCategory, $"Ping Client {this.ServerIP} - Slave {_node}: {_msg}", LogType.Debug);
                             this.Client.Send(data);
                             Thread.Sleep(TIME_SLEEP_SEND);
                         }
@@ -207,18 +210,16 @@ namespace Avani.Andon.Edge.Logic
                     //if (nodeMsg.Body.In06 == 1) _in6 = 1;
 
                     //Send to Node for Light
-                    int _nodeValue = nodeMsg.Body.In01;
-                    if (nodeMsg.Body.In02 == 1)
-                    {
-                        _nodeValue = 3;
-                    }
+                    int _nodeValue = 1 * nodeMsg.Body.In01;
+                    if (nodeMsg.Body.In02 == 1) { _nodeValue = 2; }
+                    //int _nodeValue = 1 * nodeMsg.Body.In01 + 2 * nodeMsg.Body.In02 + 4 * nodeMsg.Body.In03 + 8 * nodeMsg.Body.In04;
 
                     byte[] dataNode = ModbusRTUOverTCP.WriteMultiCoilsMsg((byte)_id, 0, 2, 15, (byte)_nodeValue);
                     string _msgNode = ByteArrayToString(dataNode);
 
                     if (this.IsConnected)
                     {
-                        _Logger.Write(_LogCategory, $"Starting send command at {ServerIP} to Local node {_id}: {_msgNode}!", LogType.Debug);
+                        //_Logger.Write(_LogCategory, $"Starting send command at {ServerIP} to Local node {_id}: {_msgNode}!", LogType.Debug);
                         this.Client.Send(dataNode);
                         Thread.Sleep(TIME_SLEEP_SEND);
                         //_Logger.Write(_LogCategory, $"Finished send command at {ServerIP} to Local node {_id}!", LogType.Debug);
@@ -228,17 +229,17 @@ namespace Avani.Andon.Edge.Logic
                 //Send to EndOfLine Node
 
                 int _lineValue = _in1;
-                if (_in2 == 1) { _lineValue = 3; }
+                if (_in2 == 1) { _lineValue = 2; }
 
                 byte[] dataLine = ModbusRTUOverTCP.WriteMultiCoilsMsg(31, 0, 2, 15, (byte)_lineValue);
                 string _msgLine = ByteArrayToString(dataLine);
 
                 if (this.IsConnected)
                 {
-                    _Logger.Write(_LogCategory, $"Starting send command at {ServerIP} to node 31: {_msgLine}!", LogType.Debug);
+                    //_Logger.Write(_LogCategory, $"Starting send command at {ServerIP} to node 31: {_msgLine}!", LogType.Debug);
                     this.Client.Send(dataLine);
                     Thread.Sleep(TIME_SLEEP_SEND);
-                    _Logger.Write(_LogCategory, $"Finished send command at {ServerIP} to node 31!", LogType.Debug);
+                    //_Logger.Write(_LogCategory, $"Finished send command at {ServerIP} to node 31!", LogType.Debug);
                 }
 
 
@@ -254,15 +255,34 @@ namespace Avani.Andon.Edge.Logic
             }
         }
 
-        private void _TimerReconnect_Elapsed(object sender, ElapsedEventArgs e)
+        //private void _TimerReconnect_Elapsed(object sender, ElapsedEventArgs e)
+        //{
+        //    _TimerReconnect.Stop();
+
+        //    ReConnect();
+
+        //    _TimerReconnect.Start();
+        //}
+
+        
+        private void _TimerCheckNoData_Elapsed(object sender, ElapsedEventArgs e)
         {
-            _TimerReconnect.Stop();
+            _TimerCheckNoData.Stop();
+            if (!this.IsConnected)
+            {
+                Connect();
+            }
+            if (this.IsConnected)
+            {
+                double _not_receive_duration = (DateTime.Now - LastTimeReceiveData).TotalSeconds;
+                if (_not_receive_duration > RESET_AFTER_NOT_RECEIVE_DATA)
+                {
+                    ReConnect();
+                }
+            }
 
-            ReConnect();
-
-            _TimerReconnect.Start();
+            _TimerCheckNoData.Start();
         }
-
 
         private void ConnectRabbitMQ()
         {
@@ -389,13 +409,10 @@ namespace Avani.Andon.Edge.Logic
                         }
                         Thread.Sleep(TIME_WAIT_CONNECT);
 
-                        lock (lockReceiveData)
+                        double timeDurationReceiveData = (DateTime.Now - LastTimeReceiveData).TotalSeconds;
+                        if (timeDurationReceiveData > SEND_RESET_NOT_RESPONSE)
                         {
-                            double timeDurationReceiveData = (DateTime.Now - LastTimeReceiveData).TotalSeconds;
-                            if (timeDurationReceiveData > TIME_NOT_RECEIVE_DATA)
-                            {
-                                ReConnect();
-                            }
+                            ReConnect();
                         }
                     }
 
@@ -430,7 +447,8 @@ namespace Avani.Andon.Edge.Logic
 
 
 
-        public void SessionOnDataReceived(object sender, DataEventArgs e)
+        public void 
+            SessionOnDataReceived(object sender, DataEventArgs e)
         {
             try
             {
@@ -439,13 +457,13 @@ namespace Avani.Andon.Edge.Logic
                 byte[] message = e.Data;
                 int messageSize = e.Length;
 
-                if (messageSize < _MessageLength) return;
+                if (2 * messageSize < _MessageLength) return;
 
                 Array.Resize(ref message, messageSize);
                 string strMessage = ByteArrayToString(message, messageSize);
                 strMessage = strMessage.Replace("\0", ""); //Bỏ ký tự NULL
                 strMessage = strMessage.Replace("\r\n", ""); //Bỏ ký tự xuống dòng
-                _Logger.Write(_LogCategory, $"Received from IP {ServerIP}: [{strMessage}]", LogType.Debug);
+                //_Logger.Write(_LogCategory, $"Received from IP {ServerIP}: [{strMessage}]", LogType.Debug);
 
                 //thoi gian nhan ban tin
                 lock (lockReceiveData)
@@ -454,7 +472,7 @@ namespace Avani.Andon.Edge.Logic
                 }
                 while(strMessage.Length >= _MessageLength)
                 {
-                    int _length = 2 * _MessageLength;
+                    int _length = _MessageLength;
                     string msgProcess = "";
                     string _command = strMessage.Substring(2, 2).ToUpper();
                     if (_command == "0F")
@@ -467,7 +485,7 @@ namespace Avani.Andon.Edge.Logic
                     //Bỏ qua bản tin trả về khi gửi lệnh ghi
                     if (_command == "0F") continue;
 
-                    _Logger.Write(_LogCategory, $"Processing message: [{msgProcess}]", LogType.Debug);
+                    //_Logger.Write(_LogCategory, $"Processing message: [{msgProcess}]", LogType.Debug);
                     ProcessLogic(msgProcess);
 
                 }

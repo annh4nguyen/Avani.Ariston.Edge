@@ -25,10 +25,13 @@ namespace Avani.Andon.Edge.Logic
         private int _ServerPort = int.Parse(ConfigurationManager.AppSettings["ServerPort"]);
 
         //Gateway
-        string GatewayIPs = ConfigurationSettings.AppSettings["DeviceIP"].Trim();
-        int GatewayPort = Convert.ToInt32(ConfigurationSettings.AppSettings["DevicePort"].Trim());
-        //public static int ATCommandPort = Convert.ToInt32(ConfigurationSettings.AppSettings["ATCommandPort"].Trim());//Port
-        public static int RESET_AFTER_NOT_RECEIVE_DATA = Convert.ToInt32(ConfigurationSettings.AppSettings["RESET_AFTER_NOT_RECEIVE_DATA"].Trim());//Time
+        string GatewayIPs = ConfigurationManager.AppSettings["DeviceIP"].Trim();
+        int GatewayPort = Convert.ToInt32(ConfigurationManager.AppSettings["DevicePort"].Trim());
+        //public static int ATCommandPort = Convert.ToInt32(ConfigurationManager.AppSettings["ATCommandPort"].Trim());//Port
+        public static int RESET_AFTER_NOT_RECEIVE_DATA = 1000 * Convert.ToInt32(ConfigurationManager.AppSettings["RESET_AFTER_NOT_RECEIVE_DATA"].Trim());//Time
+
+        public List<TCPSocketClient> Gateways = new List<TCPSocketClient>();
+
         /*
         private static IBus _EventBus = null;
         private string _RabbitMQHost = ConfigurationManager.AppSettings["RabbitMQ.Host"];
@@ -49,8 +52,7 @@ namespace Avani.Andon.Edge.Logic
         private int _RequestInterval = 1000 * int.Parse(ConfigurationManager.AppSettings["request_interval"]);
         System.Timers.Timer timerCheckNoData = new System.Timers.Timer();
 
-        private List<TCPSocketClient> Gateways = new List<TCPSocketClient>();
-
+        //private List<TCPSocketClient> Gateways = new List<TCPSocketClient>();
         Thread threadStartGateway;
 
         bool isInitForPublishRabbit = false;
@@ -84,9 +86,14 @@ namespace Avani.Andon.Edge.Logic
                 }
                 else
                 {
+
                     //Start as client Role
+                    //_ClientMode = new ClientMode();
+                    //_ClientMode.StartClient();
+
                     SetupGateway();
                     OpenGateways();
+
                     //ListenCommand();
                 }
 
@@ -95,7 +102,8 @@ namespace Avani.Andon.Edge.Logic
                     //Process Sync
                     PMS_Sync = new PMS_Sync(_Sync_Url, _SyncInterval, _Sync_Code);
                     PMS_Sync.Start();
-                }    
+                }
+                _Logger.Write(_LogCategory, $"iAndon Edge Service Stop Completed!!!", LogType.Debug);
             }
             catch (Exception ex)
             {
@@ -116,7 +124,10 @@ namespace Avani.Andon.Edge.Logic
                 else
                 {
                     CloseGateways();
+                    //_ClientMode.StopClient();
+                    //_ClientMode = null;
                 }
+                _Logger.Write(_LogCategory, $"iAndon Edge Service Stop Completed!!!", LogType.Debug);
             }
             catch (Exception ex)
             {
@@ -124,103 +135,103 @@ namespace Avani.Andon.Edge.Logic
             }
         }
 
+        #endregion
 
-
-        private void SetupGateway()
-        {
-            try
-            {
-                _Logger.Write(_LogCategory, $"Setup gateways for config: {GatewayIPs}!", LogType.Debug);
-                string[] _gateways = GatewayIPs.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 0; i < _gateways.Length; i++)
+                private void SetupGateway()
                 {
-                    string[] gateways = _gateways[i].Split(new string[] { "#" }, StringSplitOptions.RemoveEmptyEntries);
-                    string _ip = gateways[0];
-                    int _node = int.Parse(gateways[1]);
-
-                    //_Logger.Write(_LogCategory, $"{i + 1} - gateway {_ip} - port {GatewayPort}  - nodes {_node}", LogType.Debug);
-                    TCPSocketClient _client = new TCPSocketClient(i + 1, _ip, GatewayPort, _node);
-                    //_Logger.Write(_LogCategory, $"{i + 1} - gateway {gateways[0]} - port {GatewayPort} - nodes {gateways[1]}", LogType.Debug);
-                    Gateways.Add(_client);
-                }
-                //string[] arrIP = GatewayIPs.Split(';');
-
-                //for (int i = 0; i < arrIP.Length; i++)
-                //{
-                //};
-
-                _Logger.Write(_LogCategory, $"Setup gateways {Gateways.Count}...!", LogType.Debug);
-
-            }
-            catch (Exception ex)
-            {
-                _Logger.Write(_LogCategory, $"Error when setup Gateway: {ex.Message}", LogType.Error);
-            }
-        }
-
-        private void OpenGateways()
-        {
-            try
-            {
-
-                //khoi tao rabbit de publish
-                //if (!isInitForPublishRabbit)
-                //{
-                //    rabbit.InitForPublish();
-                //    isInitForPublishRabbit = true;
-                //}
-
-                _Logger.Write(_LogCategory, $"Open gateways {Gateways.Count}", LogType.Debug);
-
-
-                threadStartGateway = new Thread(() =>
-                {
-                    Parallel.For(0, Gateways.Count,
-                        i =>
+                    try
+                    {
+                        _Logger.Write(_LogCategory, $"Setup gateways for config: {GatewayIPs}!", LogType.Debug);
+                        string[] _gateways = GatewayIPs.Split(new string[] { ";" }, StringSplitOptions.RemoveEmptyEntries);
+                        for (int i = 0; i < _gateways.Length; i++)
                         {
-                            Gateways[i].OpenConnectLoop();
-                        });
-                });
+                            string[] gateways = _gateways[i].Split(new string[] { "#" }, StringSplitOptions.RemoveEmptyEntries);
+                            string _ip = gateways[0];
+                            int _node = int.Parse(gateways[1]);
 
-                threadStartGateway.Start();
+                            //_Logger.Write(_LogCategory, $"{i + 1} - gateway {_ip} - port {GatewayPort}  - nodes {_node}", LogType.Debug);
+                            TCPSocketClient _client = new TCPSocketClient(i + 1, _ip, GatewayPort, _node);
+                            //_Logger.Write(_LogCategory, $"{i + 1} - gateway {gateways[0]} - port {GatewayPort} - nodes {gateways[1]}", LogType.Debug);
+                            Gateways.Add(_client);
+                        }
+                        //string[] arrIP = GatewayIPs.Split(';');
 
-                //Khởi tạo thằng lắng nghe để reset Service nếu không nhận được dữ liệu quá thời gain
-                timerCheckNoData.Interval = _RequestInterval;
-                timerCheckNoData.Elapsed += _TimerCheckForNoData_Elapsed;
-                timerCheckNoData.Start();
+                        //for (int i = 0; i < arrIP.Length; i++)
+                        //{
+                        //};
 
-            }
-            catch (Exception ex)
-            {
-                _Logger.Write(_LogCategory, $"Error when Open Gateway: {ex.Message}", LogType.Error);
-            }
-        }
-        private void _TimerCheckForNoData_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            bool isReset = false;
-            DateTime checkTime = DateTime.Now;
-            double _not_receive_duration = 0;
-            string _ip = "";
-            foreach (TCPSocketClient client in Gateways)
-            {
-                _not_receive_duration = (checkTime - client.LastTimeReceiveData).TotalSeconds;
-                if (_not_receive_duration > RESET_AFTER_NOT_RECEIVE_DATA)
-                {
-                    _ip = client.ServerIP;
-                    isReset = true;
-                    break;
+                        _Logger.Write(_LogCategory, $"Setup gateways {Gateways.Count}...!", LogType.Debug);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        _Logger.Write(_LogCategory, $"Error when setup Gateway: {ex.Message}", LogType.Error);
+                    }
                 }
-            }
+
+                private void OpenGateways()
+                {
+                    try
+                    {
+
+                        //khoi tao rabbit de publish
+                        //if (!isInitForPublishRabbit)
+                        //{
+                        //    rabbit.InitForPublish();
+                        //    isInitForPublishRabbit = true;
+                        //}
+
+                        _Logger.Write(_LogCategory, $"Open gateways {Gateways.Count}", LogType.Debug);
 
 
-            if (isReset)
-            {
-                _Logger.Write(_LogCategory, $"Restart Service after {_not_receive_duration} second not receive data at {_ip}!", LogType.Debug);
-                ReStartService();
-            }
+                        threadStartGateway = new Thread(() =>
+                        {
+                            Parallel.For(0, Gateways.Count,
+                                i =>
+                                {
+                                    Gateways[i].OpenConnectLoop();
+                                });
+                        });
 
-        }
+                        threadStartGateway.Start();
 
+                        //Khởi tạo thằng lắng nghe để reset Service nếu không nhận được dữ liệu quá thời gain
+                        //timerCheckNoData.Interval = _RequestInterval;
+                        //timerCheckNoData.Elapsed += _TimerCheckForNoData_Elapsed;
+                        //timerCheckNoData.Start();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        _Logger.Write(_LogCategory, $"Error when Open Gateway: {ex.Message}", LogType.Error);
+                    }
+                }
+                private void _TimerCheckForNoData_Elapsed(object sender, ElapsedEventArgs e)
+                {
+                    bool isReset = false;
+                    DateTime checkTime = DateTime.Now;
+                    double _not_receive_duration = 0;
+                    string _ip = "";
+                    foreach (TCPSocketClient client in Gateways)
+                    {
+                        _not_receive_duration = (checkTime - client.LastTimeReceiveData).TotalSeconds;
+                        if (_not_receive_duration > RESET_AFTER_NOT_RECEIVE_DATA)
+                        {
+                            _ip = client.ServerIP;
+                            isReset = true;
+                            break;
+                        }
+                    }
+
+
+                    if (isReset)
+                    {
+                        _Logger.Write(_LogCategory, $"Restart Service after {_not_receive_duration} second not receive data at {_ip}!", LogType.Debug);
+                        ReStartService();
+                    }
+
+                }
+        
         private void ReStartService()
         {
             try
@@ -236,49 +247,50 @@ namespace Avani.Andon.Edge.Logic
 
         }
 
-/*
-private void ResetGateway(TCPSocketClient client)
-{
-    try
-    {
-        //Chỗ này kiểm tra xem bao nhiều lần rồi không nhận được dữ liệu
-        //Nếu chưa nhận được thì Reset thiết bị ngay
-        _Logger.Write(_LogCategory, $"Start reset gateway {client.Id}!", LogType.Debug);
-
-        TCPSocketClient _ATClient = new TCPSocketClient(0, client.ServerIP, ATCommandPort);
-        IPEndPoint iPEndPoint = new IPEndPoint(IPAddress.Parse(client.ServerIP), ATCommandPort);
-        _ATClient.Connect(iPEndPoint);
-        _Logger.Write(_LogCategory, $"Check connect status: {_ATClient.IsConnected}!", LogType.Debug);
-        if (_ATClient.IsConnected)
+        /*
+        private void ResetGateway(TCPSocketClient client)
         {
-            _Logger.Write(_LogCategory, $"Start send command to reset gateway {client.Id}!", LogType.Debug);
-            string message = "AT REBOOT \r\n";
-            byte[] messageByte = Encoding.ASCII.GetBytes(message);
-            _ATClient.Send(messageByte, 0, message.Length);
-            Thread.Sleep(100);
-            _ATClient.Close();
-            Thread.Sleep(100);
-            _Logger.Write(_LogCategory, $"Reset gateway {client.Id} done!", LogType.Debug);
-        }
-    }
-    catch (Exception e)
-    {
-        _Logger.Write(_LogCategory, $"Error when reset gateway {client.Id}!", LogType.Error);
-    }
-
-}
-*/
-private void CloseGateways()
-        {
-
-            foreach (TCPSocketClient _clent in Gateways)
+            try
             {
-                _clent.CloseConnect();
+                //Chỗ này kiểm tra xem bao nhiều lần rồi không nhận được dữ liệu
+                //Nếu chưa nhận được thì Reset thiết bị ngay
+                _Logger.Write(_LogCategory, $"Start reset gateway {client.Id}!", LogType.Debug);
+
+                TCPSocketClient _ATClient = new TCPSocketClient(0, client.ServerIP, ATCommandPort);
+                IPEndPoint iPEndPoint = new IPEndPoint(IPAddress.Parse(client.ServerIP), ATCommandPort);
+                _ATClient.Connect(iPEndPoint);
+                _Logger.Write(_LogCategory, $"Check connect status: {_ATClient.IsConnected}!", LogType.Debug);
+                if (_ATClient.IsConnected)
+                {
+                    _Logger.Write(_LogCategory, $"Start send command to reset gateway {client.Id}!", LogType.Debug);
+                    string message = "AT REBOOT \r\n";
+                    byte[] messageByte = Encoding.ASCII.GetBytes(message);
+                    _ATClient.Send(messageByte, 0, message.Length);
+                    Thread.Sleep(100);
+                    _ATClient.Close();
+                    Thread.Sleep(100);
+                    _Logger.Write(_LogCategory, $"Reset gateway {client.Id} done!", LogType.Debug);
+                }
+            }
+            catch (Exception e)
+            {
+                _Logger.Write(_LogCategory, $"Error when reset gateway {client.Id}!", LogType.Error);
+            }
+
+        }
+        */
+        private void CloseGateways()
+        {
+
+            foreach (TCPSocketClient _client in Gateways)
+            {
+                _client.CloseConnect();
             }
             //rabbit.ShutdownRabbit();
+            Gateways.Clear();
 
         }
-        #endregion
+
         #region private methods
         /*
         private void ListenCommand()
