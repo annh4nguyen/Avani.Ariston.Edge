@@ -21,6 +21,8 @@ namespace Avani.Andon.Edge.Logic
     {
 
         private Log _Logger = Avani.Andon.Edge.Logic.Helper.GetLog();
+        private Log _Rawer = Avani.Andon.Edge.Logic.Helper.GetRaws();
+
         private readonly string _LogCategory = "TCPSocketClient";
         private string _LogPath = ConfigurationManager.AppSettings["log_path"];
 
@@ -358,7 +360,6 @@ namespace Avani.Andon.Edge.Logic
 
                         //Khởi tạo nó tính từ đó là nhận dữ liệu
                         LastTimeReceiveData = DateTime.Now;
-                        _Logger.Write(_LogCategory, $"Connected to {ServerIP}: {ServerPort}!", LogType.Debug);
                     }
                 }
             }
@@ -689,7 +690,7 @@ namespace Avani.Andon.Edge.Logic
         
         private void WriteRawsData(Andon_MSG message)
         {
-            _Logger.Write(_LogCategory, $"{JsonConvert.SerializeObject(message)}", LogType.Debug, this.ServerIP);
+            _Rawer.Write(_LogCategory, $"{JsonConvert.SerializeObject(message)}", LogType.Debug, "Raw_" + this.ServerIP);
         }
         private string ByteArrayToString(byte[] ba)
         {

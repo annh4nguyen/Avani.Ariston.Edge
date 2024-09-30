@@ -43,7 +43,7 @@ namespace Avani.Andon.Edge.Logic
         //private Timer _TimerRequest = new Timer();
         */
 
-        private int _SyncInterval = int.Parse(ConfigurationManager.AppSettings["sync_interval"]);
+        private int _SyncInterval = 1000 * int.Parse(ConfigurationManager.AppSettings["sync_interval"]);
         private string _Sync_Url = ConfigurationManager.AppSettings["sync_url"];
         private string _Sync_Code = ConfigurationManager.AppSettings["sync_codes"];
 
@@ -103,7 +103,7 @@ namespace Avani.Andon.Edge.Logic
                     PMS_Sync = new PMS_Sync(_Sync_Url, _SyncInterval, _Sync_Code);
                     PMS_Sync.Start();
                 }
-                _Logger.Write(_LogCategory, $"iAndon Edge Service Stop Completed!!!", LogType.Debug);
+                _Logger.Write(_LogCategory, $"iAndon Edge Service Start Completed!!!", LogType.Debug);
             }
             catch (Exception ex)
             {
@@ -124,6 +124,8 @@ namespace Avani.Andon.Edge.Logic
                 else
                 {
                     CloseGateways();
+                    PMS_Sync.Stop();
+
                     //_ClientMode.StopClient();
                     //_ClientMode = null;
                 }

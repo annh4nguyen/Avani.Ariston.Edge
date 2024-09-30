@@ -15,14 +15,20 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using EasyNetQ.Interception;
 using iAndon.MSG;
+using System.Data.SqlClient;
+using System.Xml.Linq;
+using System.Numerics;
 //using Avani.Andon.Resources;
 
 namespace Avani.Andon.Edge.Logic
 {
     public class PMS_Sync
     {
-        private Log _Logger;
+        private Log _Logger = Avani.Andon.Edge.Logic.Helper.GetLog();
+        private Log _Rawer = Avani.Andon.Edge.Logic.Helper.GetRaws();
+
         private readonly string _LogCategory = "PMS_Sync";
+        private string _LogPath = ConfigurationManager.AppSettings["log_path"];
 
         public static string _Sync_Url;
         public static int _SyncInterval;
@@ -36,6 +42,8 @@ namespace Avani.Andon.Edge.Logic
         private string _RabbitMQUser = ConfigurationManager.AppSettings["RabbitMQ.User"];
         private string _RabbitMQPassword = ConfigurationManager.AppSettings["RabbitMQ.Password"];
         private string _CustomerID = ConfigurationManager.AppSettings["CustomerID"];
+        private int _TimeToGetProduction = Convert.ToInt32(ConfigurationManager.AppSettings["last_time_to_get_production"]);
+        
 
         private List<string> LineCodes = new List<string>();
         
@@ -153,14 +161,21 @@ namespace Avani.Andon.Edge.Logic
         {
             try
             {
+                DateTime eventTime = DateTime.Now;
+
                 foreach (string code in LineCodes)
                 {
                     try
                     {
                         PMS_BodyMessage result = GetPMSInfo(code);
+
                         if (result != null)
                         {
-                            string _rawMessage = JsonConvert.SerializeObject(result);
+                            //Kiểm tra, nếu quá cũ thì bỏ qua
+                            DateTime lastProductTime = DateTime.Parse(result.lastproductiontime);
+                            double _duration = (eventTime - lastProductTime).TotalSeconds;
+                            if (_duration > _TimeToGetProduction) continue;
+
                             //Gửi lên Rabbit
                             try
                             {
@@ -177,19 +192,23 @@ namespace Avani.Andon.Edge.Logic
                                     ConnectRabbitMQ();
                                 }
 
+                                string _rawMessage = JsonConvert.SerializeObject(result);
+
                                 if (_EventBus != null && _EventBus.IsConnected)
                                 {
                                     _EventBus.Publish<iAndon.MSG.PMS_MSG>(message);
+                                    WriteRawsData(_rawMessage, code);
                                 }
                                 else
                                 {
                                     _Logger.Write(_LogCategory, $" [{_rawMessage}]", LogType.Error, "_Error_" + code);
                                 }
- 
+
+
                             }
                             catch (Exception ex)
                             {
-                                _Logger.Write(_LogCategory, $"Process logic message {_rawMessage} from Line [{code}] Error: {ex}!", LogType.Error);
+                                _Logger.Write(_LogCategory, $"Send to RabbitMQ Sync Line [{code}] Error: {ex}", LogType.Error);
                             }
                         }
                     }
@@ -247,9 +266,7 @@ namespace Avani.Andon.Edge.Logic
                     string responseString = response.Content.ReadAsStringAsync().Result;
                     JObject jsonObj = JObject.Parse(responseString);
                     string content = jsonObj["content"].ToString();
-
-                    _Logger.Write(_LogCategory, $"PMS call for LINe {CODE}: {content}", LogType.Debug);
-
+                    //_Logger.Write(_LogCategory, $"PMS call for LINe {CODE}: {content}", LogType.Debug);
                     result = JsonConvert.DeserializeObject <PMS_BodyMessage> (content);
                 }
                 else
@@ -260,28 +277,37 @@ namespace Avani.Andon.Edge.Logic
                 client.Dispose();
 
                 //Lấy PMS giả để test
-                /*
-                using (Entities _dbContext = new Entities())
+/*
+                string _conn = "data source=27.72.56.75,7023;initial catalog=AVANI_ARISTON;persist security info=True;user id=fts_avani;password=FTSvn@AVANI;MultipleActiveResultSets=True;";
+                using (SqlConnection myConnection = new SqlConnection(_conn))
                 {
-                    MES_TMP_PMS_DATA content = _dbContext.MES_TMP_PMS_DATA.FirstOrDefault(x => x.ProductLineId == CODE && x.Status == "Running");
-                    if (content != null)
+                    string oString = $"Select * from MES_TMP_PMS_DATA where ProductLineId='{CODE}' ORDER BY [LastProductionTime] DESC";
+                    SqlCommand oCmd = new SqlCommand(oString, myConnection);
+                    myConnection.Open();
+                    using (SqlDataReader oReader = oCmd.ExecuteReader())
                     {
-                        result = new PMS_BodyMessage()
+                        while (oReader.Read())
                         {
-                            productlineid = int.Parse(content.ProductLineId),
-                            productcode = content.ProductCode,
-                            productname = content.ProductName,
-                            planid = double.Parse(content.PlanId),
-                            ponumber = double.Parse(content.PONumber),
-                            model = content.Model,
-                            planquantity = (int)content.PlanQuantity,
-                            actualquantity = (int)content.ActualQuantity,
-                            lastproductiontime = ((DateTime)content.LastProductionTime).ToString("yyyy-MM-dd HH:mm:ss"),
-                            status = content.Status,
-                        };
+                            result = new PMS_BodyMessage()
+                            {
+                                productlineid = int.Parse(oReader["ProductLineId"].ToString()),
+                                productcode = oReader["ProductCode"].ToString(),
+                                productname = oReader["ProductName"].ToString(),
+                                planid = double.Parse(oReader["PlanId"].ToString()),
+                                ponumber = double.Parse(oReader["PONumber"].ToString()),
+                                model = oReader["Model"].ToString(),
+                                planquantity = int.Parse(oReader["PlanQuantity"].ToString()),
+                                actualquantity = int.Parse(oReader["ActualQuantity"].ToString()),
+                                lastproductiontime = oReader["LastProductionTime"].ToString(),
+                                status = oReader["Status"].ToString(),
+                            };
+
+                            break;
+                        }
+                        myConnection.Close();
                     }
                 }
-                */
+*/
                 return result;
 
             }
@@ -290,6 +316,11 @@ namespace Avani.Andon.Edge.Logic
                 _Logger.Write(_LogCategory, $"Proccess Sync Call PMS line {CODE} Error: {ex}", LogType.Error);
             }
             return null;
+        }
+
+        private void WriteRawsData(string _rawMessage, string CODE)
+        {
+            _Rawer.Write(_LogCategory, $"{_rawMessage}", LogType.Info, "PMS_" + CODE);
         }
 
 

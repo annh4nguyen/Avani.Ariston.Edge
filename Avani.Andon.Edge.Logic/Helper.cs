@@ -11,5 +11,11 @@ namespace Avani.Andon.Edge.Logic
             LogType logLevel = (LogType)int.Parse(ConfigurationManager.AppSettings["log_level"].ToString());
             return new Log(System.IO.Path.Combine(_LogPath, "Logs")) { Level = logLevel };
         }
+        public static Log GetRaws()
+        {
+            string _LogPath = ConfigurationManager.AppSettings["log_path"];
+            LogType logLevel = (LogType)int.Parse(ConfigurationManager.AppSettings["log_level"].ToString());
+            return new Log(System.IO.Path.Combine(_LogPath, "Raws")) { Level = logLevel };
+        }
     }
 }
