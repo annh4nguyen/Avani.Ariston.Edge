@@ -250,7 +250,6 @@ namespace Avani.Andon.Edge.Logic
             try
             {
                 //Lấy PMS thực tế
-
                 HttpClient client = new HttpClient();
                 client.BaseAddress = new Uri(_Sync_Url);
 
@@ -276,8 +275,9 @@ namespace Avani.Andon.Edge.Logic
                 //Dispose once all HttpClient calls are complete. This is not necessary if the containing object will be disposed of; for example in this case the HttpClient instance will be disposed automatically when the application terminates so the following call is superfluous.
                 client.Dispose();
 
+
                 //Lấy PMS giả để test
-/*
+                /*
                 string _conn = "data source=27.72.56.75,7023;initial catalog=AVANI_ARISTON;persist security info=True;user id=fts_avani;password=FTSvn@AVANI;MultipleActiveResultSets=True;";
                 using (SqlConnection myConnection = new SqlConnection(_conn))
                 {
@@ -307,7 +307,8 @@ namespace Avani.Andon.Edge.Logic
                         myConnection.Close();
                     }
                 }
-*/
+                */
+
                 return result;
 
             }

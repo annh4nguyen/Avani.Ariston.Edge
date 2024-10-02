@@ -91,8 +91,8 @@ namespace Avani.Andon.Edge.Logic
                     //_ClientMode = new ClientMode();
                     //_ClientMode.StartClient();
 
-                    SetupGateway();
-                    OpenGateways();
+                    //SetupGateway();
+                    //OpenGateways();
 
                     //ListenCommand();
                 }
