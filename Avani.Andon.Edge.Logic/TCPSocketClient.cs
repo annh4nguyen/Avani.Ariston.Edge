@@ -99,7 +99,7 @@ namespace Avani.Andon.Edge.Logic
                 }
                 //rabbit = _rabbit;
                 Setup();
-                ConnectRabbitMQ();
+                //ConnectRabbitMQ();
             }
             catch (Exception ex)
             {
